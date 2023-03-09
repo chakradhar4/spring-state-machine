@@ -21,9 +21,10 @@ public class WfTurnstileApplication {
 	@PostConstruct
 	public void started() {
 		 stateMachine.start();
-		 stateMachine.sendEvent("COIN");
+		 System.out.println("inserting coin...."+stateMachine.sendEvent("COIN"));
 		 System.out.println("Coin inserted successfully current state : "+stateMachine.getState().getId());
 		 stateMachine.sendEvent("EXIT");
+		 System.out.println("workdone! processing exit...."+ stateMachine.sendEvent("EXIT"));
 		 System.out.println("EXIT successfull current state : "+stateMachine.getState().getId());
 	}
 }
