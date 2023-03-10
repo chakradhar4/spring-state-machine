@@ -21,8 +21,12 @@ public class WorkflowApplication {
 	@PostConstruct
 	public void started() {
 		
-		
-		
+		   sm.start();
+		   System.out.println(sm.getState().getId());
+		   sm.sendEvent("A");
+		   System.out.println(sm.getState().getId());
+		   sm.sendEvent("B");
+		   System.out.println(sm.getState().getId());
 		
 		/*
 		 * *****************washer***************************

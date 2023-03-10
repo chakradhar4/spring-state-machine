@@ -2,6 +2,7 @@ package com.workflow;
 
 import java.util.Map;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.statemachine.StateContext;
 import org.springframework.statemachine.action.Action;
@@ -57,25 +58,69 @@ public class ShowcaseConfig extends StateMachineConfigurerAdapter<String, String
 		transitions
 		         .withExternal()
 		         .source("S1").target("S1").event("A").guard(foo1Guard())
-		         .and()
-		        .withExternal()
+		       .and()
+		        .withExternal().source("S1").target("S11").event("B")
+		       .and()
+		        .withExternal().source("S21").target("S211").event("B")
+		       .and()
+		        .withExternal().source("S1").target("S2").event("C")
+		       .and()
+		        .withExternal().source("S2").target("S1").event("C")
+		       .and()
+		        .withExternal().source("S1").target("S0").event("D")
+		       .and()
+		        .withExternal().source("S211").target("S21").event("D")
+		       .and()
+		        .withExternal().source("S0").target("S211").event("E")
+		       .and()
+		        .withExternal().source("S1").target("S211").event("F")
+		       .and()
+		       	.withExternal().source("S2").target("S11").event("F")
+		       .and()
+		         .withExternal().source("S11").target("S211").event("G")
+		       .and()
+		         .withExternal().source("S211").target("S0").event("G")
+		       .and()
+		         .withInternal().source("S0").event("H").guard(foo0Guard()).action(fooAction())
+		       .and()
+		         .withInternal().source("S2").event("H").guard(foo1Guard()).action(fooAction())
+		       .and()
+		         .withInternal().source("S1").event("H")
+		       .and()
+		         .withExternal().source("S11").target("S12").event("I")
+		       .and()
+		         .withExternal().source("S211").target("S212").event("I")
+		       .and()
+		         .withExternal().source("S12").target("S212").event("I");
 		}
 
-
-
-
-		public FooAction foS0oAction() {
+		                //Actions and guards
+		public FooGuard  foo0Guard() {
+			return new FooGuard(0);
+		}
+		
+		@Bean
+		public FooGuard foo1Guard() {
+			return new FooGuard(1);
+		}
+        
+        @Bean
+		public FooAction fooAction() {
 			return new FooAction();
 		}
+		
 		
 		private static class FooGuard implements Guard<String,String>{
 			private final int match;
 			public FooGuard(int match) {
 				this.match= match;
 			}
+			
+			
 			@Override
 			public boolean evaluate(StateContext<String, String> context) {
-				Object foo = contect
+				Object foo = context.getExtendedState().getVariables().get("foo");
+				return !(foo == null || !foo.equals(match));
 			}
 			
 		}
