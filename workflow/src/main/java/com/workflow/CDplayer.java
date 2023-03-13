@@ -1,5 +1,9 @@
 package com.workflow;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.util.Map;
 
 import org.springframework.context.annotation.Bean;
@@ -9,6 +13,7 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.ExtendedState;
 import org.springframework.statemachine.StateContext;
 import org.springframework.statemachine.action.Action;
+import org.springframework.statemachine.annotation.OnTransition;
 import org.springframework.statemachine.config.EnableStateMachine;
 import org.springframework.statemachine.config.StateMachineConfigurerAdapter;
 import org.springframework.statemachine.config.builders.StateMachineStateConfigurer;
@@ -70,6 +75,15 @@ public class CDplayer extends StateMachineConfigurerAdapter<String,String>{
 			   		
 	}
 	
+	@Bean
+	public CdPlayer cdPlayer() {
+		return new CdPlayer();
+	}
+
+	@Bean
+	public Library library() {
+		return new Library.buildSampleLibrary();
+	}
 	
 	@Bean
 	public ClosedEntryAction closedEntryAction() {
@@ -102,6 +116,35 @@ public class CDplayer extends StateMachineConfigurerAdapter<String,String>{
 	}
 	
 	
+	
+	@Target(ElementType.METHOD)
+	@Retention(RetentionPolicy.RUNTIME)
+	@OnTransition
+	public @interface StatesOnTransition {
+		String[] source() default{};
+		
+		String[] target() default{};
+	}
+	
+	@OnTransition(target = "BUSY")
+	public void busy(ExtendedState extendedState) {
+	  Object cd = extendedState.getVariables().get("CD");
+	  if(cd != null) {
+		  cdStatus = ((Cd) cd).getName();
+	  }
+	}
+	
+	
+	@StatesOnTransition(target = {"CLOSED","IDLE"})
+	public void closed(ExtendedState extendedState) {
+		Object cd = extendedState.getVariables().get("CD");
+		if(cd != null) {
+			cdStatus = ((Cd) cd).getName();
+		}else {
+			cdStatus = "NO CD";
+		}
+		trackStatus = "";
+	}
 	
 	public static class ClosedEntryAction implements Action<String,String>{
 
@@ -162,15 +205,14 @@ public class CDplayer extends StateMachineConfigurerAdapter<String,String>{
 	}
 		
 	 public static class PlayAction implements Action<String,String>{
-
 		@Override
 		public void execute(StateContext<String, String> context) {
 			 context.getExtendedState().getVariables().put("ELAPSEDTIME",01);
 			 context.getExtendedState().getVariables().put("TRACK",0);	
 		}
 	 }
+	 
 	  public static class PlayGuard implements Guard<String,String>{
-
 		@Override
 		public boolean evaluate(StateContext<String, String> context) {
 			 ExtendedState extendedState = context.getExtendedState();
@@ -178,13 +220,12 @@ public class CDplayer extends StateMachineConfigurerAdapter<String,String>{
 		} 
 	  }
 	  
+	  
 	  public static class LoadAction implements Action<String,String>{
-
 		@Override
 		public void execute(StateContext<String, String> context) {
 		     Object cd = context.getMessageHeader("CD");
 		     context.getExtendedState().getVariables().put("CD",cd);
-			
 		}
 		  
 	  }
